@@ -183,6 +183,7 @@ struct CPU : Thread {
     struct Line;
     auto line(u32 vaddr) -> Line&;
     template<u32 Size> auto read(u32 vaddr, u32 address) -> u64;
+    template<u32 Size> auto read_noSideEffect(u32 vaddr, u32 address) -> maybe<u64>;
     template<u32 Size> auto write(u32 vaddr, u32 address, u64 data) -> void;
     auto power(bool reset) -> void;
 
@@ -297,6 +298,7 @@ struct CPU : Thread {
   template<u32 Size> auto busWrite(u32 address, u64 data) -> void;
   template<u32 Size> auto busRead(u32 address) -> u64;
   template<u32 Size> auto read(u64 vaddr) -> maybe<u64>;
+  auto readByte_noSideEffect(u64 vaddr) -> maybe<u8>;
   template<u32 Size> auto write(u64 vaddr, u64 data, bool alignedError=true) -> bool;
   template<u32 Size> auto vaddrAlignedError(u64 vaddr, bool write) -> bool;
   auto addressException(u64 vaddr) -> void;

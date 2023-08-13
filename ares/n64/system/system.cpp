@@ -123,16 +123,18 @@ auto System::initDebugHooks() -> void {
   };
 
   GDB::server.hooks.read = [](u32 address, u32 unitCount, u32 unitSize) {
-    Thread fakeThread{};
+    assert(unitSize == 1);
     string res{""};
     for(u32 i=0; i<unitCount; ++i) {
-      switch(unitSize) {
-        case Byte: res.append(hex(static_cast< u8>(bus.read<Byte>(address, fakeThread)), unitSize*2, '0')); break;
-        case Half: res.append(hex(static_cast<u16>(bus.read<Half>(address, fakeThread)), unitSize*2, '0')); break;
-        case Word: res.append(hex(static_cast<u32>(bus.read<Word>(address, fakeThread)), unitSize*2, '0')); break;
-        case Dual: res.append(hex(static_cast<u64>(bus.read<Dual>(address, fakeThread)), unitSize*2, '0')); break;
+      auto v = cpu.readByte_noSideEffect(address);
+      if (!v) {
+        // couldn't read byte: stop there, return truncated result
+        // see m packet: https://sourceware.org/gdb/onlinedocs/gdb/Packets.html
+        // "The reply may contain fewer addressable memory units than requested if the server was able to read only part of the region of memory."
+        // (note: idk if this should also happen if it's the first byte which can't be read)
+        break;
       }
-      res.append("");
+      res.append(hex(static_cast<u8>(v.get()), 2, '0'));
       address += unitSize;
     }
     return res;

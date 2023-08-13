@@ -102,6 +102,16 @@ auto CPU::DataCache::read(u32 vaddr, u32 address) -> u64 {
 }
 
 template<u32 Size>
+auto CPU::DataCache::read_noSideEffect(u32 vaddr, u32 address) -> maybe<u64> {
+  // DataCache::line(), Line::hit() and Line::read() have no side effect (currently...)
+  auto& line = this->line(vaddr);
+  if(!line.hit(address))
+    return nothing;
+  else
+    return line.read<Size>(address);
+}
+
+template<u32 Size>
 auto CPU::DataCache::write(u32 vaddr, u32 address, u64 data) -> void {
   auto& line = this->line(vaddr);
   if(!line.hit(address)) {

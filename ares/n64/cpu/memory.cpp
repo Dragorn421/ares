@@ -215,6 +215,40 @@ auto CPU::read(u64 vaddr) -> maybe<u64> {
   unreachable;
 }
 
+auto CPU::readByte_noSideEffect(u64 vaddr) -> maybe<u8> {
+  // reading a byte, always aligned
+
+  maybe<u64> v;
+
+  switch(segment(vaddr)) {
+  case Context::Segment::Unused:
+    return nothing;
+  case Context::Segment::Mapped:
+    throw std::logic_error("TLB read in CPU::read_noSideEffect not implemented");
+    return nothing;
+  case Context::Segment::Cached:
+    v = dcache.read_noSideEffect<Byte>(vaddr, vaddr & 0x1fff'ffff);
+    if (!v)
+      v = bus.read_noSideEffect<Byte>(vaddr & 0x1fff'ffff);
+    break;
+  case Context::Segment::Cached32:
+    v = dcache.read_noSideEffect<Byte>(vaddr, vaddr & 0xffff'ffff);
+    if (!v)
+      v = bus.read_noSideEffect<Byte>(vaddr & 0xffff'ffff);
+    break;
+  case Context::Segment::Direct:
+    v = bus.read_noSideEffect<Byte>(vaddr & 0x1fff'ffff);
+    break;
+  case Context::Segment::Direct32:
+    v = bus.read_noSideEffect<Byte>(vaddr & 0xffff'ffff);
+    break;
+  }
+
+  if (!v)
+    return {false};
+  return static_cast<u8>(v.get());
+}
+
 template<u32 Size>
 auto CPU::write(u64 vaddr0, u64 data, bool alignedError) -> bool {
   if(alignedError && vaddrAlignedError<Size>(vaddr0, true)) return false;

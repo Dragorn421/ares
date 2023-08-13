@@ -24,6 +24,18 @@ inline auto Bus::read(u32 address, Thread& thread) -> u64 {
 }
 
 template<u32 Size>
+inline auto Bus::read_noSideEffect(u32 address) -> maybe<u64> {
+  // assert aligned read
+  assert((address & ~(0x1fff'ffff - (Size - 1))) == 0);
+
+  if(address <= 0x007f'ffff) return rdram.ram.read_noSideEffect<Size>(address);
+  else {
+    throw std::logic_error("Bus::read_noSideEffect reading from not-rdram unimplemented");
+    return nothing;
+  }
+}
+
+template<u32 Size>
 inline auto Bus::write(u32 address, u64 data, Thread& thread) -> void {
   address &= 0x1fff'ffff - (Size - 1);
   if constexpr(Accuracy::CPU::Recompiler) {

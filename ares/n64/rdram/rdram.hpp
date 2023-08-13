@@ -11,6 +11,12 @@ struct RDRAM : Memory::RCP<RDRAM> {
     }
 
     template<u32 Size>
+    auto read_noSideEffect(u32 address) -> u64 {
+      assert(address < size);
+      return Memory::Writable::read_noSideEffect<Size>(address);
+    }
+
+    template<u32 Size>
     auto write(u32 address, u64 value) -> void {
       if (address >= size) return;
       Memory::Writable::write<Size>(address, value);

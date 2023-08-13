@@ -32,6 +32,7 @@ namespace Memory {
 struct Bus {
   //bus.hpp
   template<u32 Size> auto read(u32 address, Thread& thread) -> u64;
+  template<u32 Size> auto read_noSideEffect(u32 address) -> maybe<u64>;
   template<u32 Size> auto write(u32 address, u64 data, Thread& thread) -> void;
 };
 

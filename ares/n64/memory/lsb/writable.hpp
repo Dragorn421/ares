@@ -58,6 +58,9 @@ struct Writable {
   }
 
   template<u32 Size>
+  auto read_noSideEffect(u32 address) -> u64 { return read<Size>(address); }
+
+  template<u32 Size>
   auto write(u32 address, u64 value) -> void {
     if constexpr(Size == Byte) *(u8* )&data[address & maskByte ^ 3] = value;
     if constexpr(Size == Half) *(u16*)&data[address & maskHalf ^ 2] = value;
