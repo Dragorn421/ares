@@ -13,6 +13,7 @@
 #include <functional>
 #include <span>
 #include <vector>
+#include <cstring>
 
 #if defined(ARCHITECTURE_AMD64)
 #include <nmmintrin.h>

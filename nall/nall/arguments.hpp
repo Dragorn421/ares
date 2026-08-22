@@ -37,6 +37,7 @@ struct Arguments {
   auto take(string_view name) -> bool;
   auto take(string_view name, bool& argument) -> bool;
   auto take(string_view name, string& argument) -> bool;
+  auto take(string_view name, std::vector<string>& arguments) -> bool;
 
   auto begin() { return arguments.begin(); }
   auto end() { return arguments.end(); }
@@ -166,6 +167,22 @@ inline auto Arguments::take(string_view name, string& argument) -> bool {
       arguments.erase(arguments.begin() + index);
       argument = arguments[index];
       arguments.erase(arguments.begin() + index);
+      return true;
+    }
+  }
+  return false;
+}
+
+inline auto Arguments::take(string_view name, std::vector<string>& remaining_arguments) -> bool {
+  printf("arguments.size() = %zd\n", arguments.size());
+  for(u32 index : range(arguments.size())) {
+    printf("%s %s\n", arguments[index].data(), name.data());
+    if(arguments[index].match(name)) {
+      arguments.erase(arguments.begin() + index);
+      while (index < arguments.size()) {
+        remaining_arguments.push_back(arguments[index]);
+        arguments.erase(arguments.begin() + index);
+      }
       return true;
     }
   }

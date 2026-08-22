@@ -25,6 +25,8 @@ struct Platform {
   virtual auto audio(Node::Audio::Stream) -> void {}
   virtual auto input(Node::Input::Input) -> void {}
   virtual auto cheat(u32 addr) -> maybe<u32> { return nothing; }
+  virtual auto gameEnviron() -> std::vector<std::pair<string,string>> { return {}; }
+  virtual auto gameArguments() -> std::vector<string> { return {}; }
 };
 
 extern Platform* platform;

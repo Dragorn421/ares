@@ -89,6 +89,9 @@ auto System::run() -> void {
 auto System::load(Node::System& root, string name) -> bool {
   if(node) unload();
 
+  gameEnviron = std::move(platform->gameEnviron());
+  gameArguments = std::move(platform->gameArguments());
+
   information = {};
   information.name = "Nintendo 64";
 

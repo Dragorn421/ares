@@ -118,6 +118,22 @@ struct Program : ares::Platform {
   /// Mutex used to manage access to the input system. Polling occurs on the main thread while the results are read by the emulation thread.
   std::recursive_mutex inputMutex;
   
+  // Environment variables and arguments to pass to the run game
+  std::vector<std::pair<string,string>> pendingGameEnviron;
+  std::vector<string> pendingGameArguments;
+
+  auto gameEnviron() -> std::vector<std::pair<string,string>> override {
+    auto result = std::move(pendingGameEnviron);
+    pendingGameEnviron.clear();
+    return result;
+  }
+
+  auto gameArguments() -> std::vector<string> override {
+    auto result = std::move(pendingGameArguments);
+    pendingGameArguments.clear();
+    return result;
+  }
+
 private:
   /// Routine used while the emulator thread is waiting for work to complete that modifies its state.
   auto waitForInterrupts() -> void;

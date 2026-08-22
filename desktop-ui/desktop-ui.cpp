@@ -57,6 +57,19 @@ auto nall::main(Arguments arguments) -> void {
   //force early allocation for better proximity to executable code
   ares::Memory::FixedAllocator::get();
 
+  for (int i = 0; i < arguments.size(); i++)
+    printf("[%d] %s\n", i, arguments[i].data());
+
+  // Take -- and following arguments first to avoid recognizing rom arguments as ares'
+  std::vector<string> rom_args;
+  arguments.take("--", rom_args);
+  program.pendingGameArguments = std::move(rom_args);
+  for (int i = 0; i < program.pendingGameArguments.size(); i++)
+    printf("[%d] %s\n", i, program.pendingGameArguments[i].data());
+
+  for (int i = 0; i < arguments.size(); i++)
+    printf("[%d] %s\n", i, arguments[i].data());
+
 #if defined(PLATFORM_WINDOWS)
   bool createTerminal = arguments.take("--terminal");
   terminal::redirectStdioToTerminal(createTerminal);
@@ -170,6 +183,7 @@ auto nall::main(Arguments arguments) -> void {
     print("  --no-file-prompt      Do not prompt to load (optional) additional roms (eg: 64DD)\n");
     print("  --settings-file path  Specify a settings file override (settings.bml)\n");
     print("  --save-state slot     Specify a save state slot to load (1-9)\n");
+    print("  -- ...                Specify arguments to pass along to the game\n");
     print("\n");
     print("Available Systems:\n");
     print("  ");
