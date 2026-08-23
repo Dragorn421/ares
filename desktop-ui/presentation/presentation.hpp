@@ -63,6 +63,7 @@ struct Presentation : Window {
       MenuItem pathSettingsAction{&settingsMenu};
       MenuItem driverSettingsAction{&settingsMenu};
       MenuItem debugSettingsAction{&settingsMenu};
+      MenuItem addonsSettingsAction{&settingsMenu};
       MenuItem importExportAction{&settingsMenu};
     Menu toolsMenu{&menuBar};
       Menu saveStateMenu{&toolsMenu};

@@ -6,6 +6,8 @@
 #include "status.cpp"
 #include "utility.cpp"
 #include "drivers.cpp"
+#include <nall/addons/addons.hpp>
+#include <vector>
 
 Program program;
 thread worker;
@@ -20,6 +22,41 @@ auto Program::create() -> void {
   if(kiosk) {
     if(startFullScreen) videoFullScreenToggle();
     if(startPseudoFullScreen) videoPseudoFullScreenToggle();
+  }
+
+  addons::addonsManager.addonsFolder = settings.paths.addons ? settings.paths.addons : locate("Addons/");
+  addons::addonsManager.addonStateChangeCallback = [](addons::Addon& addon){
+    int i = 0;
+    while (i < settings.addons.enabledAddonsList.size()) {
+      if (settings.addons.enabledAddonsList[i] == addon.name) {
+        if (addon.enabled) {
+          // enabled addon already in the enabled addons list
+          return;
+        } else {
+          // remove disabled addon from the enabled addons list
+          settings.addons.enabledAddonsList.erase(settings.addons.enabledAddonsList.begin() + i);
+        }
+      } else {
+        i++;
+      }
+    }
+    if (addon.enabled) {
+      // add enabled addon to the enabled addons list
+      settings.addons.enabledAddonsList.push_back(addon.name);
+    }
+  };
+  addons::addonsManager.refreshAddons();
+  for (auto& addon : addons::addonsManager.addons) {
+    bool enable = false;
+    for (auto& n : settings.addons.enabledAddonsList) {
+      if (addon.name == n) {
+        enable = true;
+        break;
+      }
+    }
+    if (enable) {
+      addons::addonsManager.enable(addon);
+    }
   }
 
   _isRunning = true;

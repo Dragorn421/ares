@@ -335,6 +335,9 @@ Presentation::Presentation() {
   debugSettingsAction.setText("Debug" ELLIPSIS).setIcon(Icon::Device::Network).onActivate([&] {
     settingsWindow.show("Debug");
   });
+  addonsSettingsAction.setText("Addons" ELLIPSIS).setIcon(Icon::Emblem::Script).onActivate([&] {
+    settingsWindow.show("Addons");
+  });
   importExportAction.setText("Settings File" ELLIPSIS).setIcon(Icon::Action::Save).onActivate([&] {
     settingsWindow.show("Settings File");
   });

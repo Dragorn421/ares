@@ -96,6 +96,7 @@ struct Settings : Markup::Node {
     string screenshots;
     string debugging;
     string arcadeRoms;
+    string addons;
     struct SuperFamicom {
       string gameBoy;
       string bsMemory;
@@ -112,6 +113,11 @@ struct Settings : Markup::Node {
     bool enabled = false; // if enabled, server starts with ares
     bool useIPv4 = false; // forces IPv4 over IPv6
   } debugServer;
+
+  struct Addons {
+    string enabledAddons = "";
+    std::vector<string> enabledAddonsList;
+  } addons;
 
   struct Nintendo64 {
     bool expansionPak = true;
@@ -355,6 +361,11 @@ struct PathSettings : VerticalLayout {
     LineEdit arcadeRomsPath{&arcadeRomsLayout, Size{~0, 0}};
     Button arcadeRomsAssign{&arcadeRomsLayout, Size{80, 0}};
     Button arcadeRomsReset{&arcadeRomsLayout, Size{80, 0}};
+  Label addonsLabel{this, Size{~0, 0}, 5};
+  HorizontalLayout addonsLayout{this, Size{~0, 0}};
+    LineEdit addonsPath{&addonsLayout, Size{~0, 0}};
+    Button addonsAssign{&addonsLayout, Size{80, 0}};
+    Button addonsReset{&addonsLayout, Size{80, 0}};
 };
 
 struct DriverSettings : VerticalLayout {
@@ -440,6 +451,25 @@ struct DebugSettings : VerticalLayout {
   Label connectInfo{this, Size{~0, 30}, 5};
 };
 
+struct AddonsSettings : VerticalLayout {
+  auto construct() -> void;
+  auto refresh() -> void;
+  auto select(const string& emulator, const string& type, const string& region) -> bool;
+  auto eventChange() -> void;
+  auto eventEnable() -> void;
+  auto eventDisable() -> void;
+  auto eventToggle() -> void;
+  auto eventRefresh() -> void;
+
+  Label addonsLabel{this, Size{~0, 0}, 5};
+  TableView addonsList{this, Size{~0, ~0}};
+  HorizontalLayout controlLayout{this, Size{~0, 0}};
+    Button refreshButton{&controlLayout, Size{80, 0}};
+    Canvas spacer{&controlLayout, Size{~0, 0}};
+    Button enableButton{&controlLayout, Size{80, 0}};
+    Button disableButton{&controlLayout, Size{80, 0}};
+};
+
 struct ImportExportSettings : VerticalLayout {
   auto construct() -> void;
   auto refresh() -> void;
@@ -479,6 +509,7 @@ struct SettingsWindow : Window {
       PathSettings pathSettings;
       DriverSettings driverSettings;
       DebugSettings debugSettings;
+      AddonsSettings addonsSettings;
       ImportExportSettings importExportSettings;
       HomePanel homePanel;
   
@@ -501,4 +532,5 @@ extern FirmwareSettings& firmwareSettings;
 extern PathSettings& pathSettings;
 extern DriverSettings& driverSettings;
 extern DebugSettings& debugSettings;
+extern AddonsSettings& addonsSettings;
 extern ImportExportSettings& importExportSettings;

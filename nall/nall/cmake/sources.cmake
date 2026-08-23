@@ -87,6 +87,13 @@ target_sources(
 target_sources(
   nall
   PRIVATE #
+    addons/addons.cpp
+    addons/addons.hpp
+)
+
+target_sources(
+  nall
+  PRIVATE #
     arithmetic/natural.hpp
     arithmetic/unsigned.hpp
 )

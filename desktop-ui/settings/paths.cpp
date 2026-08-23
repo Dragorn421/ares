@@ -112,6 +112,24 @@ auto PathSettings::construct() -> void {
     refresh();
   });
 
+  addonsLabel.setText("Addons").setFont(Font().setBold());
+  addonsLayout.setPadding(12_sx, 0);
+  addonsPath.setEditable(false);
+  addonsAssign.setText("Assign" ELLIPSIS).onActivate([&] {
+    BrowserDialog dialog;
+    dialog.setTitle("Select Addons Path");
+    dialog.setPath(Path::desktop());
+    dialog.setAlignment(settingsWindow);
+    if(auto location = program.selectFolder(dialog)) {
+      settings.paths.addons = location;
+      refresh();
+    }
+  });
+  addonsReset.setText("Reset").onActivate([&] {
+    settings.paths.addons = "";
+    refresh();
+  });
+
   refresh();
 }
 
@@ -166,5 +184,11 @@ auto PathSettings::refresh() -> void {
     arcadeRomsPath.setText(pathname(settings.paths.arcadeRoms)).setForegroundColor();
   } else {
     arcadeRomsPath.setText(pathname(string{mia::homeLocation(), "Arcade"})).setForegroundColor(SystemColor::PlaceholderText);
+  }
+
+  if(settings.paths.addons) {
+    addonsPath.setText(pathname(settings.paths.addons)).setForegroundColor();
+  } else {
+    addonsPath.setText(pathname(locate("Addons/"))).setForegroundColor(SystemColor::PlaceholderText);
   }
 }

@@ -26,6 +26,7 @@ auto ImportExportSettings::construct() -> void {
       pathSettings.construct();
       driverSettings.construct();
       debugSettings.construct();
+      addonsSettings.construct();
       importExportSettings.construct();
     }
   });

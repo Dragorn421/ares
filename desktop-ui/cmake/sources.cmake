@@ -27,6 +27,7 @@ target_sources(desktop-ui PRIVATE resource/resource.cpp resource/resource.hpp)
 target_sources(
   desktop-ui
   PRIVATE
+    settings/addons.cpp
     settings/audio.cpp
     settings/debug.cpp
     settings/drivers.cpp
