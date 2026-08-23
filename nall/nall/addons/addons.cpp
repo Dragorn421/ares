@@ -6,6 +6,10 @@
 namespace nall::addons {
   AddonsManager addonsManager{};
 
+  AddonsManager::AddonsManager() {
+    initAAI();
+  }
+
   void AddonsManager::refreshAddons() {
     if (!addonsFolder)
       return;
@@ -61,14 +65,14 @@ namespace nall::addons {
       fprintf(stderr, "dlopen on %s failed: %s\n", file.c_str(), dlerror());
       return;
     }
-    auto addonEntryFunc = (void(*)(void))dlsym(addon.handle, "ares_addon_entry");
+    auto addonEntryFunc = (void(*)(const ares_addon_interface*))dlsym(addon.handle, "ares_addon_entry");
     if (!addonEntryFunc) {
       fprintf(stderr, "dlsym ares_addon_entry failed: %s\n", dlerror());
       dlclose(addon.handle);
       addon.handle = NULL;
       return;
     }
-    addonEntryFunc();
+    addonEntryFunc(&aai);
     addon.enabled = true;
     addonStateChangeCallback(addon);
   }
@@ -76,9 +80,31 @@ namespace nall::addons {
   void AddonsManager::disable(Addon& addon) {
     if (!addon.enabled)
       return;
+    // TODO somehow keep track of the addon's listeners and remove them here
     dlclose(addon.handle);
     addon.handle = nullptr;
     addon.enabled = false;
     addonStateChangeCallback(addon);
+  }
+
+  void AddonsManager::addListenerEventCoreLoad(EventCoreLoadCallback callback, void *udata) {
+    listenersEventCoreLoad.push_back({callback, udata});
+  }
+
+  void AddonsManager::sendEventCoreLoad(string& name) {
+    EventCoreLoad event{name.data()};
+    for (auto& listener : listenersEventCoreLoad) {
+      listener.first(&event, listener.second);
+    }
+  }
+
+  extern "C" void AAI_addListenerEventCoreLoad(const ares_addon_interface *aai, EventCoreLoadCallback callback, void *udata) {
+    auto addonsManager = static_cast<AddonsManager*>(aai->addonsManager);
+    addonsManager->addListenerEventCoreLoad(callback, udata);
+  }
+
+  void AddonsManager::initAAI() {
+    aai.addonsManager = this;
+    aai.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
   }
 }

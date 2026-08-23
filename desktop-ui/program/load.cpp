@@ -88,6 +88,8 @@ auto Program::load(string location) -> bool {
   }
   location = emulator->game->location;
 
+  nall::addons::addonsManager.sendEventCoreLoad(emulator->name);
+
   //this is a safeguard warning in case the user loads their games from a read-only location:
   string savesPath = settings.paths.saves;
   if(!savesPath) savesPath = Location::path(location);
