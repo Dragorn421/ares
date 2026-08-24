@@ -45,6 +45,9 @@ auto Program::create() -> void {
       settings.addons.enabledAddonsList.push_back(addon.name);
     }
   };
+  addons::addonsManager.setEmulationPausedCallback = [](bool paused) {
+    program.pause(paused);
+  };
   addons::addonsManager.refreshAddons();
   for (auto& addon : addons::addonsManager.addons) {
     bool enable = false;

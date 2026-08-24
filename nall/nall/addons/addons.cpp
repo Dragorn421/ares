@@ -6,8 +6,20 @@
 namespace nall::addons {
   AddonsManager addonsManager{};
 
+  Addon::Addon(string directory, string name) {
+    this->directory = directory;
+    this->name = name;
+    enabled = false;
+    handle = NULL;
+    aai = ares_addon_interface{
+      .addon=this,
+      .addon_directory=this->directory.data(),
+      .com=&addonsManager.aaiCom
+    };
+  }
+
   AddonsManager::AddonsManager() {
-    initAAI();
+    initAAICom();
   }
 
   void AddonsManager::refreshAddons() {
@@ -51,7 +63,7 @@ namespace nall::addons {
         }
       }
       if (newAddonName) {
-        addons.push_back(Addon{.name=addonName, .enabled=false});
+        addons.push_back(Addon(string(addonsFolder, "/", addonName), addonName));
       }
     }
   }
@@ -72,9 +84,10 @@ namespace nall::addons {
       addon.handle = NULL;
       return;
     }
-    addonEntryFunc(&aai);
+    addonEntryFunc(&addon.aai);
     addon.enabled = true;
-    addonStateChangeCallback(addon);
+    if (addonStateChangeCallback != nullptr)
+      addonStateChangeCallback(addon);
   }
 
   void AddonsManager::disable(Addon& addon) {
@@ -84,7 +97,8 @@ namespace nall::addons {
     dlclose(addon.handle);
     addon.handle = nullptr;
     addon.enabled = false;
-    addonStateChangeCallback(addon);
+    if (addonStateChangeCallback != nullptr)
+      addonStateChangeCallback(addon);
   }
 
   void AddonsManager::addListenerEventCoreLoad(EventCoreLoadCallback callback, void *udata) {
@@ -99,12 +113,23 @@ namespace nall::addons {
   }
 
   extern "C" void AAI_addListenerEventCoreLoad(const ares_addon_interface *aai, EventCoreLoadCallback callback, void *udata) {
-    auto addonsManager = static_cast<AddonsManager*>(aai->addonsManager);
+    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
     addonsManager->addListenerEventCoreLoad(callback, udata);
   }
 
-  void AddonsManager::initAAI() {
-    aai.addonsManager = this;
-    aai.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
+  void AddonsManager::setEmulationPaused(bool paused) {
+    if (setEmulationPausedCallback != nullptr)
+      setEmulationPausedCallback(paused);
+  }
+
+  extern "C" void AAI_setEmulationPaused(const ares_addon_interface *aai, bool paused) {
+    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
+    addonsManager->setEmulationPaused(paused);
+  }
+
+  void AddonsManager::initAAICom() {
+    aaiCom.addonsManager = this;
+    aaiCom.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
+    aaiCom.setEmulationPaused = AAI_setEmulationPaused;
   }
 }
