@@ -1,6 +1,7 @@
 #include <n64/n64.hpp>
 #include <algorithm>
 
+#include <nall/addons/addons.hpp>
 #include <nall/gdb/server.hpp>
 
 namespace ares::Nintendo64 {
@@ -143,6 +144,7 @@ auto System::load(Node::System& root, string name) -> bool {
   if(model() == Model::Aleck64) aleck64.load(node);
 
   initDebugHooks();
+  initAddonsCallbacks();
   _vulkanNeedsLoad = true;
 
   return true;
@@ -378,6 +380,27 @@ auto System::initDebugHooks() -> void {
       cpu.recompiler.invalidateSection((u32)address);
     };
   }
+}
+
+auto System::initAddonsCallbacks() -> void {
+  addons::addonsManager.n64_getRAMCallback = [](void *data, u32 start, u32 end) {
+    if (end < start)
+      return;
+    auto sz = end - start;
+    auto data_u8 = (u8*)data;
+    if (start + sz > rdram.ram.size) {
+      if (start < rdram.ram.size)
+        sz = rdram.ram.size - start;
+      else
+        sz = 0;
+      for (auto i : range(sz, end - start - sz)) {
+        data_u8[i] = 0;
+      }
+    }
+    for (auto i : range(sz)) {
+      data_u8[i] = rdram.ram.data[(start + i) ^ 3];
+    }
+  };
 }
 
 auto System::unload() -> void {

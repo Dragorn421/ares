@@ -24,6 +24,12 @@ auto Program::create() -> void {
     if(startPseudoFullScreen) videoPseudoFullScreenToggle();
   }
 
+  addons::addonsManager.acquireEmulatorThreadGuardCallback = []() -> std::unique_ptr<addons::Guard> {
+    class WrappedGuard : public addons::Guard {
+      Program::Guard guard;
+    };
+    return std::make_unique<WrappedGuard>();
+  };
   addons::addonsManager.addonsFolder = settings.paths.addons ? settings.paths.addons : locate("Addons/");
   addons::addonsManager.addonStateChangeCallback = [](addons::Addon& addon){
     int i = 0;

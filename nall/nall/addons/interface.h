@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <stdint.h>
 
 struct EventCoreLoad {
     const char *name;
@@ -18,6 +19,7 @@ struct ares_addon_interface_com {
     void *addonsManager;
     void (*addListenerEventCoreLoad)(const struct ares_addon_interface*, EventCoreLoadCallback, void *udata);
     void (*setEmulationPaused)(const struct ares_addon_interface*, bool paused);
+    bool (*n64_getRAM)(const struct ares_addon_interface*, void *data, uint32_t start, uint32_t end);
 };
 
 struct ares_addon_interface {

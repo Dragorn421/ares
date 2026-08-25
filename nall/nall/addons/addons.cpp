@@ -20,6 +20,11 @@ namespace nall::addons {
 
   AddonsManager::AddonsManager() {
     initAAICom();
+    clearCoreSpecificHooks();
+  }
+
+  void AddonsManager::clearCoreSpecificHooks() {
+    n64_getRAMCallback = nullptr;
   }
 
   void AddonsManager::refreshAddons() {
@@ -127,9 +132,27 @@ namespace nall::addons {
     addonsManager->setEmulationPaused(paused);
   }
 
+  bool AddonsManager::n64_getRAM(void *data, uint32_t start, uint32_t end) {
+    auto guardCB = acquireEmulatorThreadGuardCallback;
+    if (guardCB == nullptr)
+      return false;
+    auto guard = guardCB();
+    if (n64_getRAMCallback != nullptr) {
+      n64_getRAMCallback(data, start, end);
+      return true;
+    }
+    return false;
+  }
+
+  extern "C" bool AAI_n64_getRAM(const ares_addon_interface *aai, void *data, uint32_t start, uint32_t end) {
+    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
+    return addonsManager->n64_getRAM(data, start, end);
+  }
+
   void AddonsManager::initAAICom() {
     aaiCom.addonsManager = this;
     aaiCom.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
     aaiCom.setEmulationPaused = AAI_setEmulationPaused;
+    aaiCom.n64_getRAM = AAI_n64_getRAM;
   }
 }

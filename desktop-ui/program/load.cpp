@@ -79,6 +79,7 @@ auto Program::load(string location) -> bool {
   if(settings.debugServer.enabled) {
     nall::GDB::server.reset();
   }
+  nall::addons::addonsManager.clearCoreSpecificHooks();
 
   if(!emulator->load(location)) {
     emulator.reset();
@@ -167,6 +168,7 @@ auto Program::unload() -> void {
 
   nall::GDB::server.close();
   nall::GDB::server.reset();
+  nall::addons::addonsManager.clearCoreSpecificHooks();
 
   settings.save();
   clearUndoStates();
