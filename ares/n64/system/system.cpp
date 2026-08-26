@@ -383,6 +383,9 @@ auto System::initDebugHooks() -> void {
 }
 
 auto System::initAddonsCallbacks() -> void {
+  addons::addonsManager.n64_gdbReportSignalTrapCallback = []() {
+    GDB::server.reportSignal(GDB::Signal::TRAP, cpu.ipu.pc);
+  };
   addons::addonsManager.n64_getRAMCallback = [](void *data, u32 start, u32 end) {
     if (end < start)
       return;

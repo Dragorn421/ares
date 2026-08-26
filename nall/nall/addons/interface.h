@@ -25,8 +25,9 @@ struct ares_addon_interface_com {
     void (*addListenerEventCoreLoad)(const struct ares_addon_interface*, EventCoreLoadCallback, void *udata);
     void (*setEmulationPaused)(const struct ares_addon_interface*, bool paused);
     // TODO(addons) make core-specific callbacks a pointed-to separate struct, for organizational purposes
+    void (*n64_gdbReportSignalTrap)(const struct ares_addon_interface*);
     bool (*n64_getRAM)(const struct ares_addon_interface*, void *data, uint32_t start, uint32_t end);
-    void* (*n64_addBreakpoint)(const struct ares_addon_interface*, uint32_t start, uint32_t end, enum breakpoint_type type);
+    void* (*n64_addBreakpoint)(const struct ares_addon_interface*, uint32_t start, uint32_t end, enum breakpoint_type type, void (*callback)(void *udata), void *udata);
     void (*n64_removeBreakpoint)(const struct ares_addon_interface*, void* breakpoint_handle);
 };
 

@@ -52,12 +52,15 @@ namespace nall::addons {
       std::function<void(bool paused)> setEmulationPausedCallback;
       void setEmulationPaused(bool paused);
 
+      std::function<void()> n64_gdbReportSignalTrapCallback;
+      void n64_gdbReportSignalTrap();
+
       std::function<void(void *data, uint32_t start, uint32_t end)> n64_getRAMCallback;
       bool n64_getRAM(void *data, uint32_t start, uint32_t end);
 
       std::function<u32(u32 start, u32 end, std::function<void()> callback)> n64_addBreakpointPIDMAWritePlannedCallback;
       std::function<void(u32 id)> n64_removeBreakpointPIDMAWritePlannedCallback;
-      void* n64_addBreakpoint(uint32_t start, uint32_t end, enum breakpoint_type type);
+      void* n64_addBreakpoint(uint32_t start, uint32_t end, enum breakpoint_type type, void (*callback)(void *udata), void *udata);
       void n64_removeBreakpoint(void*);
   };
 

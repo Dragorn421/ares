@@ -25,6 +25,7 @@ namespace nall::addons {
   }
 
   void AddonsManager::clearCoreSpecificHooks() {
+    n64_gdbReportSignalTrapCallback = nullptr;
     n64_getRAMCallback = nullptr;
     n64_addBreakpointPIDMAWritePlannedCallback = nullptr;
     n64_removeBreakpointPIDMAWritePlannedCallback = nullptr;
@@ -136,6 +137,16 @@ namespace nall::addons {
     addonsManager->setEmulationPaused(paused);
   }
 
+  void AddonsManager::n64_gdbReportSignalTrap() {
+    auto guard = acquireEmulatorThreadGuardCallback();
+    n64_gdbReportSignalTrapCallback();
+  }
+
+  extern "C" void AAI_n64_gdbReportSignalTrap(const ares_addon_interface *aai) {
+    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
+    addonsManager->n64_gdbReportSignalTrap();
+  }
+
   bool AddonsManager::n64_getRAM(void *data, uint32_t start, uint32_t end) {
     auto guardCB = acquireEmulatorThreadGuardCallback;
     if (guardCB == nullptr)
@@ -153,15 +164,15 @@ namespace nall::addons {
     return addonsManager->n64_getRAM(data, start, end);
   }
 
-  void* AddonsManager::n64_addBreakpoint(uint32_t start, uint32_t end, enum breakpoint_type type) {
+  void* AddonsManager::n64_addBreakpoint(uint32_t start, uint32_t end, enum breakpoint_type type, void (*callback)(void *udata), void *udata) {
     auto guard = acquireEmulatorThreadGuardCallback();
     switch(type) {
       case BREAKPOINT_TYPE_NONE:
         return NULL;
       case BREAKPOINT_TYPE_PI_DMA_WRITE_PLANNED:
-        auto id = n64_addBreakpointPIDMAWritePlannedCallback(start, end, []() {
-          // TODO(addons) actually do something here. addon callback?
+        auto id = n64_addBreakpointPIDMAWritePlannedCallback(start, end, [callback, udata]() {
           fprintf(stderr, "n64_addBreakpointPIDMAWritePlannedCallback callback called\n");
+          callback(udata);
         });
         auto bp_handle = new Breakpoint([this, id]() {
           n64_removeBreakpointPIDMAWritePlannedCallback(id);
@@ -172,9 +183,9 @@ namespace nall::addons {
     return NULL;
   }
 
-  extern "C" void* AAI_n64_addBreakpoint(const struct ares_addon_interface *aai, uint32_t start, uint32_t end, enum breakpoint_type type) {
+  extern "C" void* AAI_n64_addBreakpoint(const struct ares_addon_interface *aai, uint32_t start, uint32_t end, enum breakpoint_type type, void (*callback)(void *udata), void *udata) {
     auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
-    return addonsManager->n64_addBreakpoint(start, end, type);
+    return addonsManager->n64_addBreakpoint(start, end, type, callback, udata);
   }
 
   void AddonsManager::n64_removeBreakpoint(void *bp_handle) {
@@ -191,6 +202,7 @@ namespace nall::addons {
     aaiCom.addonsManager = this;
     aaiCom.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
     aaiCom.setEmulationPaused = AAI_setEmulationPaused;
+    aaiCom.n64_gdbReportSignalTrap = AAI_n64_gdbReportSignalTrap;
     aaiCom.n64_getRAM = AAI_n64_getRAM;
     aaiCom.n64_addBreakpoint = AAI_n64_addBreakpoint;
     aaiCom.n64_removeBreakpoint = AAI_n64_removeBreakpoint;
