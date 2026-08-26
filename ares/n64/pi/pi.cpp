@@ -6,6 +6,7 @@ PI pi;
 #include "dma.cpp"
 #include "io.cpp"
 #include "debugger.cpp"
+#include "breakpoints.cpp"
 #include "serialization.cpp"
 
 auto PI::load(Node::Object parent) -> void {

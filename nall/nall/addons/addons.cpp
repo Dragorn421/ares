@@ -1,4 +1,5 @@
 #include "addons.hpp"
+#include <cstdio>
 #include <dlfcn.h>
 #include <filesystem>
 #include <vector>
@@ -25,6 +26,9 @@ namespace nall::addons {
 
   void AddonsManager::clearCoreSpecificHooks() {
     n64_getRAMCallback = nullptr;
+    n64_addBreakpointPIDMAWritePlannedCallback = nullptr;
+    n64_removeBreakpointPIDMAWritePlannedCallback = nullptr;
+    // TODO(addons) add a callback to clear breakpoints and call it here, which may also warrant renaming this method
   }
 
   void AddonsManager::refreshAddons() {
@@ -98,7 +102,7 @@ namespace nall::addons {
   void AddonsManager::disable(Addon& addon) {
     if (!addon.enabled)
       return;
-    // TODO somehow keep track of the addon's listeners and remove them here
+    // TODO(addons) somehow keep track of the addon's listeners and remove them here
     dlclose(addon.handle);
     addon.handle = nullptr;
     addon.enabled = false;
@@ -149,10 +153,46 @@ namespace nall::addons {
     return addonsManager->n64_getRAM(data, start, end);
   }
 
+  void* AddonsManager::n64_addBreakpoint(uint32_t start, uint32_t end, enum breakpoint_type type) {
+    auto guard = acquireEmulatorThreadGuardCallback();
+    switch(type) {
+      case BREAKPOINT_TYPE_NONE:
+        return NULL;
+      case BREAKPOINT_TYPE_PI_DMA_WRITE_PLANNED:
+        auto id = n64_addBreakpointPIDMAWritePlannedCallback(start, end, []() {
+          // TODO(addons) actually do something here. addon callback?
+          fprintf(stderr, "n64_addBreakpointPIDMAWritePlannedCallback callback called\n");
+        });
+        auto bp_handle = new Breakpoint([this, id]() {
+          n64_removeBreakpointPIDMAWritePlannedCallback(id);
+        });
+        // TODO(addons) store breakpoints for later removal, on addon disable
+        return bp_handle;
+    }
+    return NULL;
+  }
+
+  extern "C" void* AAI_n64_addBreakpoint(const struct ares_addon_interface *aai, uint32_t start, uint32_t end, enum breakpoint_type type) {
+    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
+    return addonsManager->n64_addBreakpoint(start, end, type);
+  }
+
+  void AddonsManager::n64_removeBreakpoint(void *bp_handle) {
+    auto bp = static_cast<Breakpoint*>(bp_handle);
+    bp->remove();
+  }
+
+  extern "C" void AAI_n64_removeBreakpoint(const struct ares_addon_interface *aai, void *bp_handle) {
+    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
+    addonsManager->n64_removeBreakpoint(bp_handle);
+  }
+
   void AddonsManager::initAAICom() {
     aaiCom.addonsManager = this;
     aaiCom.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
     aaiCom.setEmulationPaused = AAI_setEmulationPaused;
     aaiCom.n64_getRAM = AAI_n64_getRAM;
+    aaiCom.n64_addBreakpoint = AAI_n64_addBreakpoint;
+    aaiCom.n64_removeBreakpoint = AAI_n64_removeBreakpoint;
   }
 }

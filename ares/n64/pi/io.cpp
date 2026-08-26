@@ -114,6 +114,7 @@ auto PI::ioWrite(u32 address, u32 data_) -> void {
   if(address == 3) {
     //PI_WRITE_LENGTH
     io.writeLength = n24(data);
+    breakpoints.notifyPlannedWrite(io.dramAddress, io.writeLength);
     io.dmaBusy = 1;
     io.originPc = cpu.ipu.pc;
     cpu.queueInsert(Queue::PI_DMA_Write, dmaDuration(false));

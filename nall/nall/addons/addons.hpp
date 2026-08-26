@@ -22,6 +22,10 @@ namespace nall::addons {
       virtual ~Guard() = default;
   };
 
+  struct Breakpoint {
+    std::function<void()> remove;
+  };
+
   class AddonsManager {
     public:
       AddonsManager();
@@ -50,6 +54,11 @@ namespace nall::addons {
 
       std::function<void(void *data, uint32_t start, uint32_t end)> n64_getRAMCallback;
       bool n64_getRAM(void *data, uint32_t start, uint32_t end);
+
+      std::function<u32(u32 start, u32 end, std::function<void()> callback)> n64_addBreakpointPIDMAWritePlannedCallback;
+      std::function<void(u32 id)> n64_removeBreakpointPIDMAWritePlannedCallback;
+      void* n64_addBreakpoint(uint32_t start, uint32_t end, enum breakpoint_type type);
+      void n64_removeBreakpoint(void*);
   };
 
   extern AddonsManager addonsManager;

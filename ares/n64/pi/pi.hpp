@@ -13,6 +13,20 @@ struct PI : Memory::RCP<PI> {
     } tracer;
   } debugger;
 
+  struct Breakpoints {
+    // breakpoints.cpp
+    auto notifyPlannedWrite(u32 dramAddress, u32 writeLength) -> void;
+
+    struct Breakpoint {
+      std::function<void()> callback;
+      u32 start;
+      u32 end; // inclusive
+      u32 id;
+    };
+    std::vector<Breakpoint> plannedWriteBreakpoints;
+    u32 plannedWriteBreakpointsNextId = 1;
+  } breakpoints;
+
   //pi.cpp
   auto load(Node::Object) -> void;
   auto unload() -> void;
