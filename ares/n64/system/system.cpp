@@ -404,21 +404,6 @@ auto System::initAddonsCallbacks() -> void {
       data_u8[i] = rdram.ram.data[(start + i) ^ 3];
     }
   };
-  addons::addonsManager.n64_addBreakpointPIDMAWritePlannedCallback = [](u32 start, u32 end, std::function<void()> callback) {
-    u32 id = pi.breakpoints.plannedWriteBreakpointsNextId++;
-    PI::Breakpoints::Breakpoint bp{callback, start, end, id};
-    pi.breakpoints.plannedWriteBreakpoints.push_back(bp);
-    return id;
-  };
-  addons::addonsManager.n64_removeBreakpointPIDMAWritePlannedCallback = [](u32 id) {
-    auto iter = pi.breakpoints.plannedWriteBreakpoints.begin();
-    while(iter != pi.breakpoints.plannedWriteBreakpoints.end()){
-      if (iter->id == id){
-        pi.breakpoints.plannedWriteBreakpoints.erase(iter);
-        return;
-      }
-    }
-  };
 }
 
 auto System::unload() -> void {

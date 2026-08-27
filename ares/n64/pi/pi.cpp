@@ -1,4 +1,5 @@
 #include <n64/n64.hpp>
+#include <nall/addons/addons.hpp>
 
 namespace ares::Nintendo64 {
 
@@ -6,7 +7,6 @@ PI pi;
 #include "dma.cpp"
 #include "io.cpp"
 #include "debugger.cpp"
-#include "breakpoints.cpp"
 #include "serialization.cpp"
 
 auto PI::load(Node::Object parent) -> void {

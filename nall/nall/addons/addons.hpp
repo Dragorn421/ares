@@ -26,6 +26,23 @@ namespace nall::addons {
     std::function<void()> remove;
   };
 
+  template<typename T> class EventManager {
+    using EventCallback = void (*)(const T*, void*);
+    struct Listener {
+      Addon *addon;
+      EventCallback callback;
+      void *udata;
+    };
+    std::vector<Listener> listeners;
+
+    std::mutex mutex;
+    auto lock() { return std::lock_guard<std::mutex>(mutex); }
+   public:
+    void addListener(Addon *addon, EventCallback callback, void *udata);
+    void removeAllListeners(Addon *addon);
+    void send(T& event);
+  };
+
   class AddonsManager {
     public:
       AddonsManager();
@@ -45,8 +62,7 @@ namespace nall::addons {
       ares_addon_interface_com aaiCom;
       void initAAICom();
 
-      std::vector<std::pair<EventCoreLoadCallback,void*>> listenersEventCoreLoad;
-      void addListenerEventCoreLoad(EventCoreLoadCallback callback, void *udata);
+      EventManager<EventCoreLoad> eventCoreLoad;
       void sendEventCoreLoad(string& name);
 
       std::function<void(bool paused)> setEmulationPausedCallback;
@@ -58,10 +74,8 @@ namespace nall::addons {
       std::function<void(void *data, uint32_t start, uint32_t end)> n64_getRAMCallback;
       bool n64_getRAM(void *data, uint32_t start, uint32_t end);
 
-      std::function<u32(u32 start, u32 end, std::function<void()> callback)> n64_addBreakpointPIDMAWritePlannedCallback;
-      std::function<void(u32 id)> n64_removeBreakpointPIDMAWritePlannedCallback;
-      void* n64_addBreakpoint(uint32_t start, uint32_t end, enum breakpoint_type type, void (*callback)(void *udata), void *udata);
-      void n64_removeBreakpoint(void*);
+      EventManager<EventPIDMAWritePlanned> n64_eventPIDMAWritePlanned;
+      void n64_sendEventPIDMAWritePlanned(uint32_t dramAddrReg, uint32_t wrLenReg);
   };
 
   extern AddonsManager addonsManager;

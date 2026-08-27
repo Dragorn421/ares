@@ -13,10 +13,11 @@ struct EventCoreLoad {
 };
 typedef void (*EventCoreLoadCallback)(const struct EventCoreLoad*, void *udata);
 
-enum breakpoint_type {
-    BREAKPOINT_TYPE_NONE,
-    BREAKPOINT_TYPE_PI_DMA_WRITE_PLANNED
+struct EventPIDMAWritePlanned {
+    uint32_t dramAddrReg;
+    uint32_t wrLenReg;
 };
+typedef void (*EventPIDMAWritePlannedCallback)(const struct EventPIDMAWritePlanned*, void *udata);
 
 struct ares_addon_interface;
 
@@ -27,8 +28,7 @@ struct ares_addon_interface_com {
     // TODO(addons) make core-specific callbacks a pointed-to separate struct, for organizational purposes
     void (*n64_gdbReportSignalTrap)(const struct ares_addon_interface*);
     bool (*n64_getRAM)(const struct ares_addon_interface*, void *data, uint32_t start, uint32_t end);
-    void* (*n64_addBreakpoint)(const struct ares_addon_interface*, uint32_t start, uint32_t end, enum breakpoint_type type, void (*callback)(void *udata), void *udata);
-    void (*n64_removeBreakpoint)(const struct ares_addon_interface*, void* breakpoint_handle);
+    void (*n64_addListenerPIDMAWritePlanned)(const struct ares_addon_interface*, EventPIDMAWritePlannedCallback callback, void *udata);
 };
 
 struct ares_addon_interface {
