@@ -38,8 +38,8 @@ namespace nall::addons {
     std::mutex mutex;
     auto lock() { return std::lock_guard<std::mutex>(mutex); }
    public:
-    void addListener(Addon *addon, EventCallback callback, void *udata);
-    void removeAllListeners(Addon *addon);
+    void addListener(Addon& addon, EventCallback callback, void *udata);
+    void removeAllListeners(Addon& addon);
     void send(T& event);
   };
 
@@ -64,6 +64,12 @@ namespace nall::addons {
 
       EventManager<EventCoreLoad> eventCoreLoad;
       void sendEventCoreLoad(string& name);
+
+      EventManager<EventEmulationPaused> eventEmulationPaused;
+      void sendEventEmulationPaused(bool paused);
+
+      EventManager<EventGDBHalted> eventGDBHalted;
+      void sendEventGDBHalted(bool halted);
 
       std::function<void(bool paused)> setEmulationPausedCallback;
       void setEmulationPaused(bool paused);

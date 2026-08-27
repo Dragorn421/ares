@@ -13,6 +13,16 @@ struct EventCoreLoad {
 };
 typedef void (*EventCoreLoadCallback)(const struct EventCoreLoad*, void *udata);
 
+struct EventEmulationPaused {
+    bool paused;
+};
+typedef void (*EventEmulationPausedCallback)(const struct EventEmulationPaused*, void *udata);
+
+struct EventGDBHalted {
+    bool halted;
+};
+typedef void (*EventGDBHaltedCallback)(const struct EventGDBHalted*, void *udata);
+
 struct EventPIDMAWritePlanned {
     uint32_t dramAddrReg;
     uint32_t wrLenReg;
@@ -24,6 +34,8 @@ struct ares_addon_interface;
 struct ares_addon_interface_com {
     void *addonsManager;
     void (*addListenerEventCoreLoad)(const struct ares_addon_interface*, EventCoreLoadCallback, void *udata);
+    void (*addListenerEventEmulationPaused)(const struct ares_addon_interface*, EventEmulationPausedCallback, void *udata);
+    void (*addListenerEventGDBHalted)(const struct ares_addon_interface*, EventGDBHaltedCallback, void *udata);
     void (*setEmulationPaused)(const struct ares_addon_interface*, bool paused);
     // TODO(addons) make core-specific callbacks a pointed-to separate struct, for organizational purposes
     void (*n64_gdbReportSignalTrap)(const struct ares_addon_interface*);

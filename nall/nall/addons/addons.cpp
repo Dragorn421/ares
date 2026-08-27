@@ -19,16 +19,16 @@ namespace nall::addons {
     };
   }
 
-  template<typename T> void EventManager<T>::addListener(Addon *addon, EventCallback callback, void *udata) {
+  template<typename T> void EventManager<T>::addListener(Addon& addon, EventCallback callback, void *udata) {
     auto guard = lock();
-    listeners.push_back(Listener{addon, callback, udata});
+    listeners.push_back(Listener{&addon, callback, udata});
   }
 
-  template<typename T> void EventManager<T>::removeAllListeners(Addon *addon) {
+  template<typename T> void EventManager<T>::removeAllListeners(Addon& addon) {
     auto guard = lock();
     auto iter = listeners.begin();
     while (iter != listeners.end()) {
-      if (iter->addon == addon)
+      if (iter->addon == &addon)
         iter = listeners.erase(iter);
       else
         iter++;
@@ -124,13 +124,19 @@ namespace nall::addons {
   void AddonsManager::disable(Addon& addon) {
     if (!addon.enabled)
       return;
-    eventCoreLoad.removeAllListeners(&addon);
-    n64_eventPIDMAWritePlanned.removeAllListeners(&addon);
+    eventCoreLoad.removeAllListeners(addon);
+    n64_eventPIDMAWritePlanned.removeAllListeners(addon);
     dlclose(addon.handle);
     addon.handle = nullptr;
     addon.enabled = false;
     if (addonStateChangeCallback != nullptr)
       addonStateChangeCallback(addon);
+  }
+
+  template<typename T> static void AAI_addListener(std::function<EventManager<T>&(AddonsManager&)> eventManagerGetter, const ares_addon_interface *aai, void (*callback)(const T*, void*), void *udata) {
+    auto addon = static_cast<Addon*>(aai->addon);
+    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
+    eventManagerGetter(*addonsManager).addListener(*addon, callback, udata);
   }
 
   void AddonsManager::sendEventCoreLoad(string& name) {
@@ -139,9 +145,25 @@ namespace nall::addons {
   }
 
   static void AAI_addListenerEventCoreLoad(const ares_addon_interface *aai, EventCoreLoadCallback callback, void *udata) {
-    auto addon = static_cast<Addon*>(aai->addon);
-    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
-    addonsManager->eventCoreLoad.addListener(addon, callback, udata);
+    AAI_addListener<EventCoreLoad>([](auto& addonsManager) -> auto& {return addonsManager.eventCoreLoad;}, aai, callback, udata);
+  }
+
+  void AddonsManager::sendEventEmulationPaused(bool paused) {
+    EventEmulationPaused event{paused};
+    eventEmulationPaused.send(event);
+  }
+
+  static void AAI_addListenerEventEmulationPaused(const ares_addon_interface *aai, EventEmulationPausedCallback callback, void *udata) {
+    AAI_addListener<EventEmulationPaused>([](auto& addonsManager) -> auto& {return addonsManager.eventEmulationPaused;}, aai, callback, udata);
+  }
+
+  void AddonsManager::sendEventGDBHalted(bool halted) {
+    EventGDBHalted event{halted};
+    eventGDBHalted.send(event);
+  }
+
+  static void AAI_addListenerEventGDBHalted(const ares_addon_interface *aai, EventGDBHaltedCallback callback, void *udata) {
+    AAI_addListener<EventGDBHalted>([](auto& addonsManager) -> auto& {return addonsManager.eventGDBHalted;}, aai, callback, udata);
   }
 
   void AddonsManager::setEmulationPaused(bool paused) {
@@ -149,7 +171,7 @@ namespace nall::addons {
       setEmulationPausedCallback(paused);
   }
 
-  extern "C" void AAI_setEmulationPaused(const ares_addon_interface *aai, bool paused) {
+  static void AAI_setEmulationPaused(const ares_addon_interface *aai, bool paused) {
     auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
     addonsManager->setEmulationPaused(paused);
   }
@@ -159,7 +181,7 @@ namespace nall::addons {
     n64_gdbReportSignalTrapCallback();
   }
 
-  extern "C" void AAI_n64_gdbReportSignalTrap(const ares_addon_interface *aai) {
+  static void AAI_n64_gdbReportSignalTrap(const ares_addon_interface *aai) {
     auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
     addonsManager->n64_gdbReportSignalTrap();
   }
@@ -176,15 +198,13 @@ namespace nall::addons {
     return false;
   }
 
-  extern "C" bool AAI_n64_getRAM(const ares_addon_interface *aai, void *data, uint32_t start, uint32_t end) {
+  static bool AAI_n64_getRAM(const ares_addon_interface *aai, void *data, uint32_t start, uint32_t end) {
     auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
     return addonsManager->n64_getRAM(data, start, end);
   }
 
   static void AAI_n64_addListenerPIDMAWritePlanned(const struct ares_addon_interface *aai, EventPIDMAWritePlannedCallback callback, void *udata) {
-    auto addon = static_cast<Addon*>(aai->addon);
-    auto addonsManager = static_cast<AddonsManager*>(aai->com->addonsManager);
-    addonsManager->n64_eventPIDMAWritePlanned.addListener(addon, callback, udata);
+    AAI_addListener<EventPIDMAWritePlanned>([](auto& addonsManager) -> auto& {return addonsManager.n64_eventPIDMAWritePlanned;}, aai, callback, udata);
   }
 
   void AddonsManager::n64_sendEventPIDMAWritePlanned(uint32_t dramAddrReg, uint32_t wrLenReg) {
@@ -195,6 +215,8 @@ namespace nall::addons {
   void AddonsManager::initAAICom() {
     aaiCom.addonsManager = this;
     aaiCom.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
+    aaiCom.addListenerEventEmulationPaused = AAI_addListenerEventEmulationPaused;
+    aaiCom.addListenerEventGDBHalted = AAI_addListenerEventGDBHalted;
     aaiCom.setEmulationPaused = AAI_setEmulationPaused;
     aaiCom.n64_gdbReportSignalTrap = AAI_n64_gdbReportSignalTrap;
     aaiCom.n64_getRAM = AAI_n64_getRAM;

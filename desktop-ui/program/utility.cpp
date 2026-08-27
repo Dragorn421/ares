@@ -8,6 +8,7 @@ auto Program::pause(bool state) -> void {
     ruby::audio.clear();
     presentation.statusRight.setText("Paused");
   }
+  addons::addonsManager.sendEventEmulationPaused(state);
 }
 
 auto Program::mute() -> void {

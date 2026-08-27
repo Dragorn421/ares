@@ -1,3 +1,4 @@
+#include <nall/addons/addons.hpp>
 #include <nall/gdb/server.hpp>
 
 #include <inttypes.h>
@@ -41,6 +42,7 @@ namespace nall::GDB {
     forceHalt = true;
     haltSignalSent = true;
     sendSignal(sig);
+    addons::addonsManager.sendEventGDBHalted(true);
 
     return true;
   }
@@ -50,6 +52,7 @@ namespace nall::GDB {
     forceHalt = true;
     haltSignalSent = true;
     sendSignal(Signal::TRAP, {wp.getTypePrefix(), hex(orgAddress), ";"});
+    addons::addonsManager.sendEventGDBHalted(true);
   }
 
   auto Server::reportMemRead(u64 address, u32 size) -> void {
@@ -94,6 +97,7 @@ namespace nall::GDB {
       if(!haltSignalSent) {
         haltSignalSent = true;
         sendSignal(Signal::TRAP);
+        addons::addonsManager.sendEventGDBHalted(true);
       }
     }
 
@@ -135,6 +139,7 @@ namespace nall::GDB {
       case '?': // handshake: why did we halt?
         haltProgram();
         haltSignalSent = true;
+        addons::addonsManager.sendEventGDBHalted(true);
         return "T05"; // needs to be faked, otherwise the GDB-client hangs up and eats 100% CPU
 
       case 'c': // continue
@@ -511,6 +516,7 @@ namespace nall::GDB {
     pcOverride.reset();
     forceHalt = false;
     haltSignalSent = false;
+    addons::addonsManager.sendEventGDBHalted(false);
   }
 
   auto Server::onConnect() -> void {
