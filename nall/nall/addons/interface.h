@@ -8,6 +8,10 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+struct ares_addon_interface;
+
+/* ares */
+
 struct EventCoreLoad {
     const char *name;
 };
@@ -23,24 +27,33 @@ struct EventGDBHalted {
 };
 typedef void (*EventGDBHaltedCallback)(const struct EventGDBHalted*, void *udata);
 
-struct EventPIDMAWritePlanned {
-    uint32_t dramAddrReg;
-    uint32_t wrLenReg;
-};
-typedef void (*EventPIDMAWritePlannedCallback)(const struct EventPIDMAWritePlanned*, void *udata);
-
-struct ares_addon_interface;
-
-struct ares_addon_interface_com {
-    void *addonsManager;
+struct ares_addon_interface_ares {
     void (*addListenerEventCoreLoad)(const struct ares_addon_interface*, EventCoreLoadCallback, void *udata);
     void (*addListenerEventEmulationPaused)(const struct ares_addon_interface*, EventEmulationPausedCallback, void *udata);
     void (*addListenerEventGDBHalted)(const struct ares_addon_interface*, EventGDBHaltedCallback, void *udata);
     void (*setEmulationPaused)(const struct ares_addon_interface*, bool paused);
-    // TODO(addons) make core-specific callbacks a pointed-to separate struct, for organizational purposes
-    void (*n64_gdbReportSignalTrap)(const struct ares_addon_interface*);
-    bool (*n64_getRAM)(const struct ares_addon_interface*, void *data, uint32_t start, uint32_t end);
-    void (*n64_addListenerPIDMAWritePlanned)(const struct ares_addon_interface*, EventPIDMAWritePlannedCallback callback, void *udata);
+};
+
+/* N64 */
+
+struct n64_EventPIDMAWritePlanned {
+    uint32_t dramAddrReg;
+    uint32_t wrLenReg;
+};
+typedef void (*n64_EventPIDMAWritePlannedCallback)(const struct n64_EventPIDMAWritePlanned*, void *udata);
+
+struct ares_addon_interface_n64 {
+    void (*gdbReportSignalTrap)(const struct ares_addon_interface*);
+    bool (*getRAM)(const struct ares_addon_interface*, void *data, uint32_t start, uint32_t end);
+    void (*addListenerEventPIDMAWritePlanned)(const struct ares_addon_interface*, n64_EventPIDMAWritePlannedCallback callback, void *udata);
+};
+
+/* interface */
+
+struct ares_addon_interface_com {
+    struct ares_addon_interface_ares *ares;
+    struct ares_addon_interface_n64 *n64;
+    void *addonsManager;
 };
 
 struct ares_addon_interface {

@@ -125,6 +125,8 @@ namespace nall::addons {
     if (!addon.enabled)
       return;
     eventCoreLoad.removeAllListeners(addon);
+    eventEmulationPaused.removeAllListeners(addon);
+    eventGDBHalted.removeAllListeners(addon);
     n64_eventPIDMAWritePlanned.removeAllListeners(addon);
     dlclose(addon.handle);
     addon.handle = nullptr;
@@ -203,23 +205,33 @@ namespace nall::addons {
     return addonsManager->n64_getRAM(data, start, end);
   }
 
-  static void AAI_n64_addListenerPIDMAWritePlanned(const struct ares_addon_interface *aai, EventPIDMAWritePlannedCallback callback, void *udata) {
-    AAI_addListener<EventPIDMAWritePlanned>([](auto& addonsManager) -> auto& {return addonsManager.n64_eventPIDMAWritePlanned;}, aai, callback, udata);
+  static void AAI_n64_addListenerEventPIDMAWritePlanned(const struct ares_addon_interface *aai, n64_EventPIDMAWritePlannedCallback callback, void *udata) {
+    AAI_addListener<n64_EventPIDMAWritePlanned>([](auto& addonsManager) -> auto& {return addonsManager.n64_eventPIDMAWritePlanned;}, aai, callback, udata);
   }
 
   void AddonsManager::n64_sendEventPIDMAWritePlanned(uint32_t dramAddrReg, uint32_t wrLenReg) {
-    EventPIDMAWritePlanned event{dramAddrReg, wrLenReg};
+    n64_EventPIDMAWritePlanned event{dramAddrReg, wrLenReg};
     n64_eventPIDMAWritePlanned.send(event);
   }
 
   void AddonsManager::initAAICom() {
+    initAAIAres();
+    initAAIN64();
+    aaiCom.ares = &aaiAres;
+    aaiCom.n64 = &aaiN64;
     aaiCom.addonsManager = this;
-    aaiCom.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
-    aaiCom.addListenerEventEmulationPaused = AAI_addListenerEventEmulationPaused;
-    aaiCom.addListenerEventGDBHalted = AAI_addListenerEventGDBHalted;
-    aaiCom.setEmulationPaused = AAI_setEmulationPaused;
-    aaiCom.n64_gdbReportSignalTrap = AAI_n64_gdbReportSignalTrap;
-    aaiCom.n64_getRAM = AAI_n64_getRAM;
-    aaiCom.n64_addListenerPIDMAWritePlanned = AAI_n64_addListenerPIDMAWritePlanned;
+  }
+
+  void AddonsManager::initAAIAres() {
+    aaiAres.addListenerEventCoreLoad = AAI_addListenerEventCoreLoad;
+    aaiAres.addListenerEventEmulationPaused = AAI_addListenerEventEmulationPaused;
+    aaiAres.addListenerEventGDBHalted = AAI_addListenerEventGDBHalted;
+    aaiAres.setEmulationPaused = AAI_setEmulationPaused;
+  }
+
+  void AddonsManager::initAAIN64() {
+    aaiN64.gdbReportSignalTrap = AAI_n64_gdbReportSignalTrap;
+    aaiN64.getRAM = AAI_n64_getRAM;
+    aaiN64.addListenerEventPIDMAWritePlanned = AAI_n64_addListenerEventPIDMAWritePlanned;
   }
 }

@@ -62,6 +62,11 @@ namespace nall::addons {
       ares_addon_interface_com aaiCom;
       void initAAICom();
 
+      /* ares */
+
+      ares_addon_interface_ares aaiAres;
+      void initAAIAres();
+
       EventManager<EventCoreLoad> eventCoreLoad;
       void sendEventCoreLoad(string& name);
 
@@ -74,13 +79,18 @@ namespace nall::addons {
       std::function<void(bool paused)> setEmulationPausedCallback;
       void setEmulationPaused(bool paused);
 
+      /* N64 */
+
+      ares_addon_interface_n64 aaiN64;
+      void initAAIN64();
+
       std::function<void()> n64_gdbReportSignalTrapCallback;
       void n64_gdbReportSignalTrap();
 
       std::function<void(void *data, uint32_t start, uint32_t end)> n64_getRAMCallback;
       bool n64_getRAM(void *data, uint32_t start, uint32_t end);
 
-      EventManager<EventPIDMAWritePlanned> n64_eventPIDMAWritePlanned;
+      EventManager<n64_EventPIDMAWritePlanned> n64_eventPIDMAWritePlanned;
       void n64_sendEventPIDMAWritePlanned(uint32_t dramAddrReg, uint32_t wrLenReg);
   };
 
