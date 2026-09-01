@@ -616,7 +616,9 @@ auto RDP::syncTile() -> void {
 //0x29
 auto RDP::syncFull() -> void {
   if(!command.crashed) {
-    mi.raise(MI::IRQ::DP);
+    constexpr u32 RDPFullSyncInterruptDelayMilliseconds = 100;
+    const u32 delayClocks = (double)system.frequency() * RDPFullSyncInterruptDelayMilliseconds / 1000;
+    cpu.queueInsert(Queue::RDP_Sync_Interrupt, delayClocks);
     command.bufferBusy = 0;
     command.pipeBusy = 0;
   }

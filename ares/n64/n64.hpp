@@ -89,6 +89,7 @@ namespace ares::Nintendo64 {
       DD_MECHA_Response,
       DD_BM_Request,
       DD_Motor_Mode,
+      RDP_Sync_Interrupt,
       GDB_Poll,
     };
   };

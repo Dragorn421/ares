@@ -95,6 +95,7 @@ auto CPU::synchronize() -> void {
     case Queue::DD_MECHA_Response:  return dd.mechaResponse();
     case Queue::DD_BM_Request:  return dd.bmRequest();
     case Queue::DD_Motor_Mode:  return dd.motorChange();
+    case Queue::RDP_Sync_Interrupt: return mi.raise(MI::IRQ::DP);
     case Queue::GDB_Poll:      return cpu.gdbPoll();
     }
   });
